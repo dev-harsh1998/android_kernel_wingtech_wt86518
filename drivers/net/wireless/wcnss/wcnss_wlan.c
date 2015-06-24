@@ -2622,6 +2622,11 @@ static int
 wcnss_trigger_config(struct platform_device *pdev)
 {
 	int ret;
+<<<<<<< HEAD
+=======
+	int rc;
+	struct clk *snoc_qosgen;
+>>>>>>> 0c5df35... wcnss: Enable Qos Ref clock for 8916/8939
 	struct qcom_wcnss_opts *pdata;
 	struct resource *res;
 	int is_pronto_vt;
@@ -2954,6 +2959,38 @@ wcnss_trigger_config(struct platform_device *pdev)
 		penv->fw_vbatt_state = WCNSS_CONFIG_UNSPECIFIED;
 	}
 
+<<<<<<< HEAD
+=======
+	snoc_qosgen = clk_get(&pdev->dev, "snoc_qosgen");
+
+	if (IS_ERR(snoc_qosgen)) {
+		pr_err("Couldn't get snoc_qosgen\n");
+	} else {
+		if (clk_prepare_enable(snoc_qosgen)) {
+			pr_err("snoc_qosgen enable failed\n");
+		} else {
+			pr_info("snoc_qosgen configured successfully\n");
+		}
+	}
+
+	if (penv->wlan_config.is_pronto_v3) {
+		penv->vadc_dev = qpnp_get_vadc(&penv->pdev->dev, "wcnss");
+
+		if (IS_ERR(penv->vadc_dev)) {
+			pr_err("%s:  vadc get failed\n", __func__);
+			penv->vadc_dev = NULL;
+		} else {
+			rc = wcnss_get_battery_volt(&penv->wlan_config.vbatt);
+			INIT_WORK(&penv->wcnss_vadc_work,
+					wcnss_send_vbatt_indication);
+
+			if (rc < 0)
+				pr_err("Failed to get battery voltage with error= %d\n",
+									rc);
+		}
+	}
+
+>>>>>>> 0c5df35... wcnss: Enable Qos Ref clock for 8916/8939
 	do {
 		/* trigger initialization of the WCNSS */
 		penv->pil = subsystem_get(WCNSS_PIL_DEVICE);
