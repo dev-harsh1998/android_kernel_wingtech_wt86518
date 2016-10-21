@@ -48,6 +48,8 @@
 
 #include <asm/uaccess.h>
 
+#include <rdma/ib.h>
+
 #include "uverbs.h"
 
 MODULE_AUTHOR("Roland Dreier");
@@ -470,6 +472,7 @@ static void ib_uverbs_async_handler(struct ib_uverbs_file *file,
 
 	entry->desc.async.element    = element;
 	entry->desc.async.event_type = event;
+	entry->desc.async.reserved   = 0;
 	entry->counter               = counter;
 
 	list_add_tail(&entry->list, &file->async_file->event_list);
@@ -586,6 +589,9 @@ static ssize_t ib_uverbs_write(struct file *filp, const char __user *buf,
 {
 	struct ib_uverbs_file *file = filp->private_data;
 	struct ib_uverbs_cmd_hdr hdr;
+
+	if (WARN_ON_ONCE(!ib_safe_file_access(filp)))
+		return -EACCES;
 
 	if (count < sizeof hdr)
 		return -EINVAL;
