@@ -1,4 +1,5 @@
 
+
 #ifndef __LINUX_MAGIC_H__
 #define __LINUX_MAGIC_H__
 
@@ -52,7 +53,6 @@
 #define REISERFS_SUPER_MAGIC_STRING	"ReIsErFs"
 #define REISER2FS_SUPER_MAGIC_STRING	"ReIsEr2Fs"
 #define REISER2FS_JR_SUPER_MAGIC_STRING	"ReIsEr3Fs"
-
 
 #define SDCARDFS_SUPER_MAGIC	0xb550ca10
 
