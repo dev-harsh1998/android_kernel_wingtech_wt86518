@@ -49,6 +49,11 @@
 #define FT_SUSPEND_LEVEL 1
 #endif
 
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
+#include <linux/input/wake_helpers.h>
+bool dit_suspend = false;
+#endif
+
 #if CTP_PROC_INTERFACE
 #include "ft5x06_test_lib.h"
 #endif
@@ -653,7 +658,24 @@ static int ft5x06_ts_suspend(struct device *dev)
     struct ft5x06_ts_data *data = dev_get_drvdata(dev);
     char txbuf[2], i;
     int err;
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
+	bool prevent_sleep = false;
+	ts_get_prevent_sleep(prevent_sleep);
+	if (prevent_sleep) {
+		/* disable the key panel touches */
+		__clear_bit(EV_KEY, data->input_dev->evbit);
+		input_sync(data->input_dev);
+	}
+#endif
 
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
+	if (prevent_sleep) {
+		dit_suspend = true;
+		enable_irq_wake(data->client->irq);
+	} else {
+		dit_suspend = false;
+#endif	
+	
     if (data->loading_fw)
     {
         dev_info(dev, "Firmware loading in process...\n");
@@ -706,10 +728,13 @@ static int ft5x06_ts_suspend(struct device *dev)
         }
     }
 
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
+	} // if (prevent_sleep)
+#endif
+
     data->suspended = true;
 
     return 0;
-
 
 pwr_off_fail:
     if (gpio_is_valid(data->pdata->reset_gpio))
@@ -727,7 +752,22 @@ static int ft5x06_ts_resume(struct device *dev)
 {
     struct ft5x06_ts_data *data = dev_get_drvdata(dev);
     int err;
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
+	bool prevent_sleep = false;
+	ts_get_prevent_sleep(prevent_sleep);
+	if (prevent_sleep) {
+		/* enable the key panel touches back again */
+		__set_bit(EV_KEY, data->input_dev->evbit);
+		input_sync(data->input_dev);
+	}
+#endif
 
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
+	if (prevent_sleep && dit_suspend) {
+		disable_irq_wake(data->client->irq);
+	} else {
+#endif	
+	
     if (!data->suspended)
     {
         dev_dbg(dev, "Already in awake state\n");
@@ -781,6 +821,9 @@ static int ft5x06_ts_resume(struct device *dev)
 		pre_charger_status = is_charger_plug;
 #endif
 
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
+	} // if (prevent_sleep)
+#endif
 
     data->suspended = false;
 
@@ -809,7 +852,7 @@ static int ft5x06_ts_resume(struct device *dev)
 #endif
 
 #if defined(CONFIG_FB)
-
+static bool unblanked_once = false;
 static void fb_notify_resume_work(struct work_struct *work)
 {
        struct ft5x06_ts_data *ft5x06_data =
@@ -828,9 +871,15 @@ static int fb_notifier_callback(struct notifier_block *self,
         ft5x06_data && ft5x06_data->client)
     {
         blank = evdata->data;
-        if (*blank == FB_BLANK_UNBLANK)
+	if (*blank == FB_BLANK_UNBLANK || (*blank == FB_BLANK_VSYNC_SUSPEND)) {
+                    if (unblanked_once) {
+           pr_info("ft5x06 resume!\n");
            schedule_work(&ft5x06_data->fb_notify_work);
-         else if (*blank == FB_BLANK_POWERDOWN) {
+           ft5x06_ts_resume(&ft5x06_data->client->dev);
+         } 
+      } else if (*blank == FB_BLANK_POWERDOWN) {
+                    unblanked_once = true;
+	    pr_info("ft5x06 suspend!\n");
             flush_work(&ft5x06_data->fb_notify_work);
             ft5x06_ts_suspend(&ft5x06_data->client->dev);
          }
@@ -2941,7 +2990,8 @@ static int ft5x06_ts_probe(struct i2c_client *client,
     if (err)
     {
         dev_err(&client->dev, "Input device registration failed\n");
-        goto free_inputdev;
+		input_free_device(input_dev);
+		return err;
     }
 
     if (pdata->power_init)
@@ -3053,7 +3103,11 @@ static int ft5x06_ts_probe(struct i2c_client *client,
 
     err = request_threaded_irq(client->irq, NULL,
                                ft5x06_ts_interrupt,
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
+                               pdata->irq_gpio_flags | IRQF_ONESHOT | IRQF_NO_SUSPEND,
+#else
                                pdata->irq_gpio_flags | IRQF_ONESHOT,
+#endif
                                client->dev.driver->name, data);
     if (err)
     {
@@ -3245,9 +3299,6 @@ pwr_deinit:
         ft5x06_power_init(data, false);
 unreg_inputdev:
     input_unregister_device(input_dev);
-    input_dev = NULL;
-free_inputdev:
-    input_free_device(input_dev);
     return err;
 }
 
