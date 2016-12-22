@@ -145,6 +145,7 @@ static DECLARE_WORK(doubletap2wake_presspwr_work, doubletap2wake_presspwr);
 
 /* PowerKey trigger */
 static void doubletap2wake_pwrtrigger(void) {
+	set_vibrate(20);
 	schedule_work(&doubletap2wake_presspwr_work);
         return;
 }

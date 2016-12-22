@@ -24,10 +24,6 @@
 #include <linux/delay.h>
 #include "../../staging/android/timed_output.h"
 
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-#include <linux/input/prevent_sleep.h>
-#endif
-
 #define QPNP_IRQ_FLAGS	(IRQF_TRIGGER_RISING | \
 			IRQF_TRIGGER_FALLING | \
 			IRQF_ONESHOT)
@@ -1103,11 +1099,6 @@ static void qpnp_hap_td_enable(struct timed_output_dev *dev, int value)
 	}
 	mutex_unlock(&hap->lock);
 	schedule_work(&hap->work);
-}
-
-void set_vibrate(int value)
-{
-	qpnp_hap_td_enable(&ghap->timed_dev, value);
 }
 
 /* worker to opeate haptics */
