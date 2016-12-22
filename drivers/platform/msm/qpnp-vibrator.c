@@ -57,8 +57,8 @@ struct qpnp_vib {
 	int timeout;
 	struct mutex lock;
 };
-//static struct qpnp_vib *gvib; static int 
-qpnp_vib_read_u8(struct qpnp_vib *vib, u8 *data, u16 reg) {
+static struct qpnp_vib *gvib; static int qpnp_vib_read_u8(struct 
+qpnp_vib *vib, u8 *data, u16 reg) {
 	int rc;
 	rc = spmi_ext_register_readl(vib->spmi->ctrl, 
 vib->spmi->sid,
@@ -182,13 +182,12 @@ qpnp_vib,
 	mutex_unlock(&vib->lock);
 	schedule_work(&vib->work);
 }
-/*
 #ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
 void set_vibrate(int value) {
 	qpnp_vib_enable(&gvib->timed_dev, value);
 }
 #endif
-*/ static void qpnp_vib_update(struct work_struct *work) {
+static void qpnp_vib_update(struct work_struct *work) {
 	struct qpnp_vib *vib = container_of(work, struct 
 qpnp_vib,
 					 work);
@@ -395,7 +394,7 @@ HRTIMER_MODE_REL);
 	vib->timed_dev.get_time = qpnp_vib_get_time;
 	vib->timed_dev.enable = qpnp_vib_enable;
 	dev_set_drvdata(&spmi->dev, vib);
-	//gvib = vib;
+	gvib = vib;
 	rc = timed_output_dev_register(&vib->timed_dev);
 	if (rc < 0)
 		return rc;

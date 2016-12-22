@@ -93,6 +93,7 @@ static bool exec_count = true;
 bool dt2w_scr_suspended = false;
 static int key_code = KEY_POWER;
 int dt2w_sent_play_pause = 0;
+int vibrate_val = 250;
 #ifndef WAKE_HOOKS_DEFINED
 #ifndef CONFIG_HAS_EARLYSUSPEND
 static struct notifier_block dt2w_lcd_notif;
@@ -148,7 +149,6 @@ static DECLARE_WORK(doubletap2wake_presspwr_work, doubletap2wake_presspwr);
 
 /* PowerKey trigger */
 static void doubletap2wake_pwrtrigger(void) {
-//	set_vibrate(20);
 	schedule_work(&doubletap2wake_presspwr_work);
         return;
 }
@@ -240,6 +240,7 @@ static void detect_doubletap2wake(int x, int y, bool st)
 					pr_info(LOGTAG"on_off\n");
 					key_code =  KEY_POWER;
 //					dt2w_sent_play_pause = 0;
+					set_vibrate(vibrate_val);
 					doubletap2wake_pwrtrigger();
 				}
 
@@ -247,6 +248,7 @@ static void detect_doubletap2wake(int x, int y, bool st)
 				pr_info(LOGTAG"on_off\n");
 				key_code =  KEY_POWER;
 //				dt2w_sent_play_pause = 0;
+				set_vibrate(vibrate_val);
 				doubletap2wake_pwrtrigger();
 			}
 			doubletap2wake_reset();

@@ -24,7 +24,7 @@
 extern bool dt2w_scr_suspended;
 extern int dt2w_switch;
 extern bool dt2w_toggled;
-//void set_vibrate(int);
+void set_vibrate(int);
 
 #define DT2W_DEBUG		0
 
