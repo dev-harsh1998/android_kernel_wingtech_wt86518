@@ -62,12 +62,15 @@ extern bool dit_suspend;   // to track if its we who called ts to _not_ suspend
 extern bool var_in_phone_call;
 //extern int headset_plugged_in;
 extern int var_is_headset_in_use;
+extern int var_in_pocket;
 
 extern bool s2w_scr_suspended;
 extern bool dt2w_scr_suspended;
 
 int is_headset_in_use(void);
 int in_phone_call(void);
+int in_pocket(void);
+void read_proximity(void);
 
 extern int dt2w_sent_play_pause;
 

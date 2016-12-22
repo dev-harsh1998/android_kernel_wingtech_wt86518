@@ -70,7 +70,7 @@ MODULE_LICENSE("GPLv2");
 /* Tuneables */
 #define DT2W_DEFAULT			0
 
-#define DT2W_DEBUG_2			1
+#define DT2W_DEBUG_2			0
 
 #define DT2W_PWRKEY_DUR			60
 #define DT2W_FEATHER			200
@@ -85,6 +85,7 @@ MODULE_LICENSE("GPLv2");
 #define DT2W_X_B2			DT2W_X_MAX-200
 
 /* Resources */
+#define IN_POCKET	0
 int dt2w_switch = DT2W_DEFAULT;
 static cputime64_t tap_time_pre = 0;
 static int touch_x = 0, touch_y = 0, touch_nr = 0, x_pre = 0, y_pre = 0;
@@ -212,12 +213,20 @@ static void detect_doubletap2wake(int x, int y, bool st)
 #endif
 		}
 		if ((touch_nr > 1)) {
+			read_proximity();
 			exec_count = false;
 #if DT2W_DEBUG_2
 			pr_info("TELOOO: dt2w_switch=%d, headset=%d, sentplaypause=%d\n",dt2w_switch, is_headset_in_use(), dt2w_sent_play_pause);
 			pr_info("TELOOO: y=%d, DT2W_Y_B1=%d, DT2W_Y_B2=%d\n",y, DT2W_Y_B1, DT2W_Y_B2);
 			pr_info("TELOOO: x=%d, DT2W_X_B1=%d, DT2W_X_B2=%d\n",x, DT2W_X_B1, DT2W_X_B2);
+			pr_info("TELOOO: POCKET=%d\n",in_pocket());
 #endif
+
+			if(IN_POCKET == in_pocket()){
+				doubletap2wake_reset();
+				return;
+			}
+
 			if (((dt2w_switch == 2) || (dt2w_switch == 1)) && is_headset_in_use()){// || dt2w_sent_play_pause)) {
 				if ((y > DT2W_Y_B1) && (y < DT2W_Y_B2)) {
 					if ((x > DT2W_X_B1) && (x < DT2W_X_B2)) {

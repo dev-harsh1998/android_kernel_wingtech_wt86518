@@ -39,6 +39,11 @@
 #endif
 #include <linux/elan_interface.h>
 #include <linux/hardware_info.h>
+
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
+#include <linux/input/wake_helpers.h>
+int var_in_pocket = 0;
+#endif
 /*********************************************************
  * configuration
 *********************************************************/
@@ -70,7 +75,7 @@ static int  DYN_L_OFFSET;
 static int  DYN_H_OFFSET;
 #define DYN_CONDITION	7500
 #endif
-//#define  DEBUG
+//#define  DEBUG	1
 #ifdef DEBUG
 #define epl_info(fmt, ...) \
 	printk(pr_fmt(fmt), ##__VA_ARGS__)
@@ -431,6 +436,8 @@ static int elan_sensor_psensor_enable(struct elan_epl_data *epld)
 
 	if (ret != 0x02)
 		epl_info("P-sensor i2c err\n");
+
+	var_in_pocket = gRawData.ps_state;
 
 	return ret;
 }
@@ -1984,6 +1991,19 @@ static void __exit elan_sensor_exit(void)
 {
 	i2c_del_driver(&elan_sensor_driver);
 }
+
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
+int in_pocket(void){
+	return var_in_pocket;
+}
+
+void read_proximity(void){
+	int tmp_enable_pflag = epl_data->enable_pflag;
+	epl_data->enable_pflag = 1;
+	elan_sensor_psensor_enable(epl_data);
+	epl_data->enable_pflag = tmp_enable_pflag;
+}
+#endif
 
 module_init(elan_sensor_init);
 module_exit(elan_sensor_exit);
