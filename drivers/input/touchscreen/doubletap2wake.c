@@ -76,10 +76,10 @@ MODULE_LICENSE("GPLv2");
 #define DT2W_FEATHER			200
 #define DT2W_TIME			500
 #define DT2W_X_MAX			720
-#define DT2W_Y_LIMIT			1280
+//#define DT2W_Y_LIMIT			1280
 
-#define DT2W_Y_B1			300
-#define DT2W_Y_B2			DT2W_Y_LIMIT-300
+#define DT2W_Y_B1			0
+#define DT2W_Y_B2			500
 
 #define DT2W_X_B1			200
 #define DT2W_X_B2			DT2W_X_MAX-200
@@ -218,7 +218,7 @@ static void detect_doubletap2wake(int x, int y, bool st)
 			pr_info("TELOOO: y=%d, DT2W_Y_B1=%d, DT2W_Y_B2=%d\n",y, DT2W_Y_B1, DT2W_Y_B2);
 			pr_info("TELOOO: x=%d, DT2W_X_B1=%d, DT2W_X_B2=%d\n",x, DT2W_X_B1, DT2W_X_B2);
 #endif
-			if ((dt2w_switch == 2) && is_headset_in_use()){// || dt2w_sent_play_pause)) {
+			if (((dt2w_switch == 2) || (dt2w_switch == 1)) && is_headset_in_use()){// || dt2w_sent_play_pause)) {
 				if ((y > DT2W_Y_B1) && (y < DT2W_Y_B2)) {
 					if ((x > DT2W_X_B1) && (x < DT2W_X_B2)) {
 						pr_info(LOGTAG"MusiqMod: play_pause\n");
