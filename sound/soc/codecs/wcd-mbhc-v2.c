@@ -38,6 +38,11 @@
 #include "msm8x16-wcd.h"
 #include "wcdcal-hwdep.h"
 
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
+#include <linux/input/wake_helpers.h>
+int var_is_headset_in_use = 0;
+#endif
+
 #define WCD_MBHC_JACK_MASK (SND_JACK_HEADSET | SND_JACK_OC_HPHL | \
 			   SND_JACK_OC_HPHR | SND_JACK_LINEOUT | \
 			   SND_JACK_UNSUPPORTED)
@@ -778,6 +783,11 @@ static void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 		wcd_mbhc_clr_and_turnon_hph_padac(mbhc);
 		msm8x16_wcd_codec_set_headset_state(mbhc->hph_status);
 	}
+
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
+	var_is_headset_in_use = mbhc->hph_status;
+#endif
+
 	pr_debug("%s: leave hph_status %x\n", __func__, mbhc->hph_status);
 }
 

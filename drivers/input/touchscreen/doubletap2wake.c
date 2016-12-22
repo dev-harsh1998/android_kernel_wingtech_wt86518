@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2013, Dennis Rassmann <showp1984@gmail.com>
  * Copyright (c) 2015, Vineeth Raj <contact.twn@openmailbox.org>
+ * Copyright (c) 2016, Aditya Wicaksono <mr.aw173@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,6 +69,8 @@ MODULE_LICENSE("GPLv2");
 
 /* Tuneables */
 #define DT2W_DEFAULT			0
+
+#define DT2W_DEBUG_2			1
 
 #define DT2W_PWRKEY_DUR			60
 #define DT2W_FEATHER			200
@@ -145,7 +148,7 @@ static DECLARE_WORK(doubletap2wake_presspwr_work, doubletap2wake_presspwr);
 
 /* PowerKey trigger */
 static void doubletap2wake_pwrtrigger(void) {
-	set_vibrate(20);
+//	set_vibrate(20);
 	schedule_work(&doubletap2wake_presspwr_work);
         return;
 }
@@ -210,31 +213,40 @@ static void detect_doubletap2wake(int x, int y, bool st)
 		}
 		if ((touch_nr > 1)) {
 			exec_count = false;
-			if ((dt2w_switch == 2) && (is_headset_in_use() || dt2w_sent_play_pause)) {
+#if DT2W_DEBUG_2
+			pr_info("TELOOO: dt2w_switch=%d, headset=%d, sentplaypause=%d\n",dt2w_switch, is_headset_in_use(), dt2w_sent_play_pause);
+			pr_info("TELOOO: y=%d, DT2W_Y_B1=%d, DT2W_Y_B2=%d\n",y, DT2W_Y_B1, DT2W_Y_B2);
+			pr_info("TELOOO: x=%d, DT2W_X_B1=%d, DT2W_X_B2=%d\n",x, DT2W_X_B1, DT2W_X_B2);
+#endif
+			if ((dt2w_switch == 2) && is_headset_in_use()){// || dt2w_sent_play_pause)) {
 				if ((y > DT2W_Y_B1) && (y < DT2W_Y_B2)) {
 					if ((x > DT2W_X_B1) && (x < DT2W_X_B2)) {
 						pr_info(LOGTAG"MusiqMod: play_pause\n");
 						key_code =  KEY_PLAYPAUSE;
-						dt2w_sent_play_pause = 1;
+//						dt2w_sent_play_pause = 1;
 						doubletap2wake_pwrtrigger();
 					} else if (x < DT2W_X_B1) {
 						pr_info(LOGTAG"MusiqMod: previous song\n");
 						key_code =  KEY_PREVIOUSSONG;
-						dt2w_sent_play_pause = 1;
+//						dt2w_sent_play_pause = 1;
 						doubletap2wake_pwrtrigger();
 					} else if (x > DT2W_X_B2) {
 						pr_info(LOGTAG"MusiqMod: next song\n");
 						key_code =  KEY_NEXTSONG;
-						dt2w_sent_play_pause = 1;
+//						dt2w_sent_play_pause = 1;
 						doubletap2wake_pwrtrigger();
 					}
-				} else {
-					doubletap2wake_reset();
+				}else {
+					pr_info(LOGTAG"on_off\n");
+					key_code =  KEY_POWER;
+//					dt2w_sent_play_pause = 0;
+					doubletap2wake_pwrtrigger();
 				}
-			} else {
+
+			}else {
 				pr_info(LOGTAG"on_off\n");
 				key_code =  KEY_POWER;
-				dt2w_sent_play_pause = 0;
+//				dt2w_sent_play_pause = 0;
 				doubletap2wake_pwrtrigger();
 			}
 			doubletap2wake_reset();

@@ -39,11 +39,6 @@
 #include "wcd9xxx-common.h"
 #include "wcdcal-hwdep.h"
 
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-#include <linux/input/wake_helpers.h>
-int var_is_headset_in_use = 0;
-#endif
-
 #define TAPAN_HPH_PA_SETTLE_COMP_ON 5000
 #define TAPAN_HPH_PA_SETTLE_COMP_OFF 13000
 
@@ -2881,20 +2876,11 @@ static int tapan_hphl_dac_event(struct snd_soc_dapm_widget *w,
 						 WCD9XXX_CLSH_STATE_HPHL,
 						 WCD9XXX_CLSH_REQ_ENABLE,
 						 WCD9XXX_CLSH_EVENT_PRE_DAC);
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-		var_is_headset_in_use = 1;
-#endif
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_update_bits(codec, TAPAN_A_CDC_CLK_RDAC_CLK_EN_CTL,
 							0x02, 0x00);
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-		var_is_headset_in_use = 0;
-#endif
 	}
-#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
-	pr_info("%s: set wake_helper var_is_headset_in_use: %d\n", __func__, var_is_headset_in_use);
-#endif
 	return 0;
 }
 
