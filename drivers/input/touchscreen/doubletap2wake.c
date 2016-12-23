@@ -74,7 +74,7 @@ MODULE_LICENSE("GPLv2");
 
 #define DT2W_PWRKEY_DUR			60
 #define DT2W_FEATHER			200
-#define DT2W_TIME			500
+#define DT2W_TIME			700
 #define DT2W_X_MAX			720
 //#define DT2W_Y_LIMIT			1280
 
@@ -95,6 +95,7 @@ bool dt2w_scr_suspended = false;
 static int key_code = KEY_POWER;
 int dt2w_sent_play_pause = 0;
 int vibrate_val = 35;
+bool in_progress = false;
 #ifndef WAKE_HOOKS_DEFINED
 #ifndef CONFIG_HAS_EARLYSUSPEND
 static struct notifier_block dt2w_lcd_notif;
@@ -180,6 +181,11 @@ static void new_touch(int x, int y) {
 static void detect_doubletap2wake(int x, int y, bool st)
 {
         bool single_touch = st;
+	if(in_progress){
+		pr_info("TELOOOO, In Progress, not allowed.\n");
+		return;	
+	}
+
 #if DT2W_DEBUG
         pr_info(LOGTAG"x,y(%4d,%4d) single:%s\n",
                 x, y, (single_touch) ? "true" : "false");
@@ -213,6 +219,7 @@ static void detect_doubletap2wake(int x, int y, bool st)
 #endif
 		}
 		if ((touch_nr > 1)) {
+			in_progress = true;
 			read_proximity();
 			exec_count = false;
 #if DT2W_DEBUG_2
@@ -224,6 +231,7 @@ static void detect_doubletap2wake(int x, int y, bool st)
 
 			if(IN_POCKET == in_pocket()){
 				doubletap2wake_reset();
+				in_progress = false;
 				return;
 			}
 
@@ -261,6 +269,7 @@ static void detect_doubletap2wake(int x, int y, bool st)
 				doubletap2wake_pwrtrigger();
 			}
 			doubletap2wake_reset();
+			in_progress = false;
 		}
 	}
 }
