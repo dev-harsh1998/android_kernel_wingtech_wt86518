@@ -38,7 +38,6 @@
 #include <linux/of_gpio.h>
 #endif
 #include <linux/elan_interface.h>
-#include <linux/hardware_info.h>
 
 #ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
 #include <linux/input/wake_helpers.h>
@@ -1912,7 +1911,6 @@ static int elan_sensor_probe(struct i2c_client *client,
 	msm_sensor_power_on = msm_sensor_camera_power_on;
 #endif
 	epl_info("sensor probe success.\n");
-	hardwareinfo_set_prop(HARDWARE_ALSPS,"elan2182");
 	return err;
 
 exit_create_class_sysfs:
@@ -1934,7 +1932,6 @@ err_lightsensor_setup:
 err_create_singlethread_workqueue:
 i2c_fail:
 	kfree(epld);
-	hardwareinfo_set_prop(HARDWARE_ALSPS,"elan2182 fail");
 	return err;
 }
 
@@ -1998,10 +1995,13 @@ int in_pocket(void){
 }
 
 void read_proximity(void){
-	int tmp_enable_pflag = epl_data->enable_pflag;
-	epl_data->enable_pflag = 1;
-	elan_sensor_psensor_enable(epl_data);
-	epl_data->enable_pflag = tmp_enable_pflag;
+	if(!epl_data)
+	{
+		pr_err("null pointer!!\n");
+		return;
+	}
+
+	elan_enable_ps_sensor(epl_data->client, 1);
 }
 #endif
 

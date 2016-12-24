@@ -94,7 +94,7 @@ static bool exec_count = true;
 bool dt2w_scr_suspended = false;
 static int key_code = KEY_POWER;
 int dt2w_sent_play_pause = 0;
-int vibrate_val = 35;
+int vibrate_val = 40;
 bool in_progress = false;
 #ifndef WAKE_HOOKS_DEFINED
 #ifndef CONFIG_HAS_EARLYSUSPEND
