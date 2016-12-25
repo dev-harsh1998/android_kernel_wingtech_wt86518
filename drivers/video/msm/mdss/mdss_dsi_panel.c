@@ -638,13 +638,15 @@ end:
 	pinfo->blank_state = MDSS_PANEL_BLANK_UNBLANK;
 	pr_debug("%s:-\n", __func__);
 	
-#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
-	s2w_scr_suspended = false;
-#endif
-#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
        ts_get_prevent_sleep(prevent_sleep);
        if (prevent_sleep)
-	       dt2w_scr_suspended = false;
+#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
+	       dt2w_scr_suspended = true;
+#endif
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+	s2w_scr_suspended = true;
+#endif
 #endif
 	return 0;
 }
@@ -679,14 +681,16 @@ static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
 end:
 	pinfo->blank_state = MDSS_PANEL_BLANK_BLANK;
 	pr_debug("%s:-\n", __func__);
-	
+
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
+       ts_get_prevent_sleep(prevent_sleep);
+       if (prevent_sleep)
+#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
+	       dt2w_scr_suspended = true;
+#endif
 #ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
 	s2w_scr_suspended = true;
 #endif
-#ifdef CONFIG_TOUCHSCREEN_DOUBLETAP2WAKE
-       ts_get_prevent_sleep(prevent_sleep);
-       if (prevent_sleep)
-	       dt2w_scr_suspended = true;
 #endif
 	return 0;
 }

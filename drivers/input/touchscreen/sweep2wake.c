@@ -58,30 +58,30 @@ MODULE_VERSION(DRIVER_VERSION);
 MODULE_LICENSE("GPLv2");
 
 /* Tuneables */
-#define S2W_DEBUG				0
-#define S2W_DEFAULT				0
+#define S2W_DEBUG			1
+#define S2W_DEFAULT			0
 #define S2W_S2SONLY_DEFAULT		0
 #define S2W_PWRKEY_DUR			60
-#define S2W_FEATHER				200
+#define S2W_FEATHER			200
 
-#define S2W_Y_MAX				1280
-#define S2W_X_MAX				720
+#define S2W_Y_MAX			1280
+#define S2W_X_MAX			720
 #ifdef CONFIG_TOUCHSCREEN_EXP_KEYPAD_SWEEP2WAKE
-#define S2W_Y_LIMIT				1280
+#define S2W_Y_LIMIT			S2W_Y_MAX
 #else
-#define S2W_Y_LIMIT				1180
+#define S2W_Y_LIMIT			S2W_Y_MAX-100
 #endif
-#define S2W_X_B1				155
-#define S2W_X_B2				355
-#define S2W_X_FINAL				175
+#define S2W_X_B1			155
+#define S2W_X_B2			355
+#define S2W_X_FINAL			175
 #ifdef CONFIG_TOUCHSCREEN_EXP_KEYPAD_SWEEP2WAKE
 #define EXP_KEYPAD_S2W
 #endif
 #define S2W_KEY_LEFT			160
 #define S2W_KEY_CENTER			360
 #define S2W_KEY_RIGHT			570
-#define S2W_Y_B1				300
-#define S2W_Y_B2				S2W_Y_LIMIT-300
+#define S2W_Y_B1			300
+#define S2W_Y_B2			S2W_Y_LIMIT-300
 
 
 /* Resources */
@@ -95,6 +95,8 @@ int s2w_keypad_swipe_length = 3;
 static bool touch_x_called = false, touch_y_called = false;
 static bool exec_count = true;
 bool s2w_scr_suspended = false;
+bool is_crossed_feather = false;
+bool is_first_touch = true;
 static bool scr_on_touch = false, barrier[2] = {false, false};
 static int key_code = KEY_POWER;
 static bool is_ltr = false;
@@ -158,6 +160,7 @@ static void sweep2wake_reset(void) {
 	barrier[0] = false;
 	barrier[1] = false;
 	scr_on_touch = false;
+	is_first_touch = true;
 	is_ltr = false;
 	is_ltr_set = false;
 #ifdef EXP_KEYPAD_S2W
@@ -166,19 +169,31 @@ static void sweep2wake_reset(void) {
 	y_init = 0;
 	touch_x = touch_y = 0;
 	key_code = KEY_POWER;
+/*
 #if S2W_DEBUG
 	pr_info(LOGTAG"sweep2wake_reset called!\n");
 #endif
+*/
 }
 
 /* Sweep2wake main function */
 static void detect_sweep2wake(int x, int y, bool st)
 {
-	int prevx = 0, nextx = 0;
+	//int prevx = 0, nextx = 0;
 	bool single_touch = st;
+
+	if(is_crossed_feather){
+		pr_info(LOGTAG"Ignore...\n");
+		return;	
+	}
 #if S2W_DEBUG
+#ifdef EXP_KEYPAD_S2W
 	pr_info(LOGTAG"x: %4d,x_pre: %4d\n",
 			x, x_pre);
+#else
+	pr_info(LOGTAG"x: %4d, y: %4d\n",
+		x, y);
+#endif
 #endif
 #ifdef EXP_KEYPAD_S2W
 	if (x_pre) {
@@ -226,6 +241,49 @@ static void detect_sweep2wake(int x, int y, bool st)
 	if ((single_touch) && (s2w_scr_suspended == true) && (s2w_switch > 0 && ((s2w_switch == 3) ? 1 : !s2w_s2sonly))) {
 		//left->right (screen_off)
 		if (is_ltr) {
+			if(x <= (S2W_X_MAX - S2W_X_FINAL)){
+				if(is_first_touch){
+					is_first_touch = false;
+				}							
+			}else{
+				if (exec_count && !is_first_touch) {
+					read_proximity();
+
+					if(IN_POCKET == in_pocket()){
+						sweep2wake_reset();
+						return;
+					}
+/*
+					if ((s2w_switch == 3) && (is_headset_in_use() || dt2w_sent_play_pause) && (y < S2W_Y_LIMIT)) {
+						if (y <= S2W_Y_B1) {
+							pr_info(LOGTAG"LTR: MusiqMod: volume up!\n");
+							key_code = KEY_VOLUMEUP;
+							sweep2wake_pwrtrigger();
+						} else if (y >= S2W_Y_B2) {
+							pr_info(LOGTAG"LTR: MusiqMod: next song\n");
+							key_code = KEY_NEXTSONG;
+							sweep2wake_pwrtrigger();
+						} else {
+pr_info("TELO: Reset 1!\n");
+							sweep2wake_reset();
+						}
+					} else {
+						pr_info(LOGTAG"LTR: ON\n");
+						key_code = KEY_POWER;
+						sweep2wake_pwrtrigger();
+					}
+*/
+					pr_info(LOGTAG"LTR: ON\n");
+					key_code = KEY_POWER;
+					set_vibrate(VIBRATE_VAL);
+					sweep2wake_pwrtrigger();
+					exec_count = false;
+				}
+			}
+
+
+/*
+			pr_info("left->right (screen_off)\n");
 			prevx = 0;
 			nextx = S2W_X_B1;
 			if ((barrier[0] == true) ||
@@ -255,6 +313,7 @@ static void detect_sweep2wake(int x, int y, bool st)
 										key_code = KEY_NEXTSONG;
 										sweep2wake_pwrtrigger();
 									} else {
+pr_info("TELO: Reset 1!\n");
 										sweep2wake_reset();
 									}
 								} else {
@@ -270,6 +329,7 @@ static void detect_sweep2wake(int x, int y, bool st)
 			}
 		//right->left (screen_off): handle MusiqMod(e)
 		} else {
+			pr_info("right->left (screen_off): handle MusiqMod(e)\n");
 			prevx = S2W_X_MAX;
 			nextx = S2W_X_B2;
 			if ((barrier[0] == true) ||
@@ -300,9 +360,11 @@ static void detect_sweep2wake(int x, int y, bool st)
 										key_code = KEY_PREVIOUSSONG;
 										sweep2wake_pwrtrigger();
 									} else {
+pr_info("TELO: Reset 2!\n");
 										sweep2wake_reset();
 									}
 								} else {
+pr_info("TELO: Reset 3!\n");
 									sweep2wake_reset();
 								}
 								exec_count = false;
@@ -313,7 +375,11 @@ static void detect_sweep2wake(int x, int y, bool st)
 			}
 		}
 	//right->left (screen_on)
-	} else if ((single_touch) && (s2w_scr_suspended == false) && (s2w_switch > 0)) {
+	}
+*/
+/*
+else if ((single_touch) && (s2w_scr_suspended == false) && (s2w_switch > 0)) {
+		pr_info("right->left (screen_on)\n");
 		scr_on_touch=true;
 		prevx = S2W_X_MAX;
 		nextx = S2W_X_B2;
@@ -341,7 +407,7 @@ static void detect_sweep2wake(int x, int y, bool st)
 						}
 					}
 				}
-			}
+			}*/
 		}
 	}
 }
@@ -361,6 +427,7 @@ static void s2w_input_callback(struct work_struct *unused) {
 
 static void s2w_input_event(struct input_handle *handle, unsigned int type,
 				unsigned int code, int value) {
+/*
 #if S2W_DEBUG
 	pr_info("sweep2wake: code: %s|%u, val: %i\n",
 		((code==ABS_MT_POSITION_X) ? "X" :
@@ -368,7 +435,9 @@ static void s2w_input_event(struct input_handle *handle, unsigned int type,
 		(code==ABS_MT_TRACKING_ID) ? "ID" :
 		"undef"), code, value);
 #endif
+*/
 	if (code == ABS_MT_SLOT) {
+pr_info("TELO: Reset 4!\n");
 		sweep2wake_reset();
 		return;
 	}
@@ -377,6 +446,8 @@ static void s2w_input_event(struct input_handle *handle, unsigned int type,
 #ifdef EXP_KEYPAD_S2W
 		if (x_pre == 0)
 #endif
+pr_info("TELO: Reset 5!\n");
+			is_crossed_feather = false;
 			sweep2wake_reset();
 		return;
 	}
@@ -404,13 +475,17 @@ static void s2w_input_event(struct input_handle *handle, unsigned int type,
 					if (x_pre == S2W_KEY_CENTER) {
 						if (touch_x == S2W_KEY_LEFT)
 							if (value == S2W_KEY_RIGHT)
-								if (s2w_scr_suspended)
+								if (s2w_scr_suspended){
+pr_info("TELO: Reset 6!\n");
 									sweep2wake_reset();
+								}
 
 						if (touch_x == S2W_KEY_RIGHT)
 							if (value == S2W_KEY_LEFT)
-								if (!s2w_scr_suspended)
+								if (!s2w_scr_suspended){
+pr_info("TELO: Reset 7!\n");
 									sweep2wake_reset();
+								}
 					}
 				}
 			}
@@ -426,6 +501,8 @@ static void s2w_input_event(struct input_handle *handle, unsigned int type,
 		} else {
 			if (abs(value - y_init) > S2W_FEATHER) {
 				pr_info(LOGTAG"y crossed S2W_FEATHER val of %i\n", S2W_FEATHER);
+pr_info("TELO: Reset 8!\n");
+				is_crossed_feather = true;
 				sweep2wake_reset();
 			}
 		}
@@ -527,10 +604,12 @@ static int lcd_notifier_callback(struct notifier_block *this,
 	switch (event) {
 	case LCD_EVENT_ON_END:
 		s2w_scr_suspended = false;
+pr_info("TELO: Reset 9!\n");
 		sweep2wake_reset();
 		break;
 	case LCD_EVENT_OFF_END:
 		s2w_scr_suspended = true;
+pr_info("TELO: Reset 10!\n");
 		sweep2wake_reset();
 		break;
 	default:
@@ -607,6 +686,7 @@ static DEVICE_ATTR(sweep2wake_distance, (S_IWUSR|S_IRUGO),
 	s2w_sweep2wake_distance_show, s2w_sweep2wake_distance_dump);
 #endif // EXP_KEYPAD_S2W
 
+/*
 static ssize_t s2w_s2w_s2sonly_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -629,6 +709,7 @@ static ssize_t s2w_s2w_s2sonly_dump(struct device *dev,
 
 static DEVICE_ATTR(s2w_s2sonly, (S_IWUSR|S_IRUGO),
 	s2w_s2w_s2sonly_show, s2w_s2w_s2sonly_dump);
+*/
 
 static ssize_t s2w_version_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -713,10 +794,10 @@ static int __init sweep2wake_init(void)
 	if (rc) {
 		pr_warn("%s: sysfs_create_file failed for sweep2wake\n", __func__);
 	}
-	rc = sysfs_create_file(android_touch_kobj, &dev_attr_s2w_s2sonly.attr);
+/*	rc = sysfs_create_file(android_touch_kobj, &dev_attr_s2w_s2sonly.attr);
 	if (rc) {
 		pr_warn("%s: sysfs_create_file failed for s2w_s2sonly\n", __func__);
-	}
+	}*/
 #ifdef EXP_KEYPAD_S2W
 	rc = sysfs_create_file(android_touch_kobj, &dev_attr_sweep2wake_distance.attr);
 	if (rc) {

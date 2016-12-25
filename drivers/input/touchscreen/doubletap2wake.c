@@ -85,7 +85,6 @@ MODULE_LICENSE("GPLv2");
 #define DT2W_X_B2			DT2W_X_MAX-200
 
 /* Resources */
-#define IN_POCKET	0
 int dt2w_switch = DT2W_DEFAULT;
 static cputime64_t tap_time_pre = 0;
 static int touch_x = 0, touch_y = 0, touch_nr = 0, x_pre = 0, y_pre = 0;
@@ -94,7 +93,7 @@ static bool exec_count = true;
 bool dt2w_scr_suspended = false;
 static int key_code = KEY_POWER;
 int dt2w_sent_play_pause = 0;
-int vibrate_val = 40;
+
 bool in_progress = false;
 #ifndef WAKE_HOOKS_DEFINED
 #ifndef CONFIG_HAS_EARLYSUSPEND
@@ -257,7 +256,7 @@ static void detect_doubletap2wake(int x, int y, bool st)
 					pr_info(LOGTAG"on_off\n");
 					key_code =  KEY_POWER;
 //					dt2w_sent_play_pause = 0;
-					set_vibrate(vibrate_val);
+					set_vibrate(VIBRATE_VAL);
 					doubletap2wake_pwrtrigger();
 				}
 
@@ -265,7 +264,7 @@ static void detect_doubletap2wake(int x, int y, bool st)
 				pr_info(LOGTAG"on_off\n");
 				key_code =  KEY_POWER;
 //				dt2w_sent_play_pause = 0;
-				set_vibrate(vibrate_val);
+				set_vibrate(VIBRATE_VAL);
 				doubletap2wake_pwrtrigger();
 			}
 			doubletap2wake_reset();

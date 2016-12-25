@@ -57,6 +57,9 @@
 #endif // S2W||DT2W
 #endif // S2W&&DT2W
 
+#define IN_POCKET	0
+#define VIBRATE_VAL	40
+
 extern bool dit_suspend;   // to track if its we who called ts to _not_ suspend
 
 extern bool var_in_phone_call;
