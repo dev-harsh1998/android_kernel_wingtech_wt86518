@@ -98,6 +98,7 @@ enum CMC_MODE {
 // TODO: change delay time
 #define PS_DELAY 			55
 #define ALS_DELAY 			100
+#define PS_WAIT				75
 
 int als_report_count = 0;
 
@@ -436,7 +437,9 @@ static int elan_sensor_psensor_enable(struct elan_epl_data *epld)
 	if (ret != 0x02)
 		epl_info("P-sensor i2c err\n");
 
+#ifdef CONFIG_TOUCHSCREEN_PREVENT_SLEEP
 	var_in_pocket = gRawData.ps_state;
+#endif
 
 	return ret;
 }
@@ -2002,6 +2005,8 @@ void read_proximity(void){
 	}
 
 	elan_enable_ps_sensor(epl_data->client, 1);
+	msleep(PS_WAIT);
+	elan_enable_ps_sensor(epl_data->client, 0);
 }
 #endif
 
