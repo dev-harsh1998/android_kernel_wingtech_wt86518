@@ -534,7 +534,7 @@ static void wcd_mbhc_set_and_turnoff_hph_padac(struct wcd_mbhc *mbhc)
 	}
 #ifdef CONFIG_MACH_WT86518
 	state = gpio_get_value(EXT_SPK_AMP_GPIO);
-	pr_debug("%s external audio pa state:%d\n", __func__, state);
+	pr_debug("%s external audio pa state:%d\n", __func__,state);
 	if (!state)
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPH_PA_EN, 0);
 #else

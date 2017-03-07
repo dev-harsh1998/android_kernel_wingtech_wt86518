@@ -881,6 +881,7 @@ static int lineout_status_get(struct snd_kcontrol *kcontrol,
 {
 	return 0;
 }
+
 static int lineout_status_put(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
@@ -2068,7 +2069,7 @@ static void *def_msm8x16_wcd_mbhc_cal(void)
 #ifdef CONFIG_MACH_CP8675
 	S(v_hs_max, 2550);
 #elif CONFIG_MACH_WT86518
-	S(v_hs_max, 1700);
+	S(v_hs_max, 2450);
 #else
 	S(v_hs_max, 1500);
 #endif
@@ -2117,16 +2118,16 @@ static void *def_msm8x16_wcd_mbhc_cal(void)
 	btn_low[4] = 137;
 	btn_high[4] = 137;
 #elif defined CONFIG_MACH_WT86518
-	btn_low[0] = 87;
-	btn_high[0] = 87;
-	btn_low[1] = 255;
-	btn_high[1] = 237;
-	btn_low[2] = 312;
-	btn_high[2] = 350;
-	btn_low[3] = 375;
-	btn_high[3] = 400;
-	btn_low[4] = 425;
-	btn_high[4] = 450;
+	btn_low[0] = 0;
+	btn_high[0] = 25;
+	btn_low[1] = 25;
+	btn_high[1] = 50;
+	btn_low[2] = 50;
+	btn_high[2] = 75;
+	btn_low[3] = 75;
+	btn_high[3] = 112;
+	btn_low[4] = 112;
+	btn_high[4] = 137;
 #else
 	btn_low[0] = 75;
 	btn_high[0] = 75;

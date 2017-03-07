@@ -4200,8 +4200,10 @@ static int msm8x16_wcd_hph_pa_event(struct snd_soc_dapm_widget *w,
 #ifdef CONFIG_MACH_WT86518
 		enable_ldo17(1);//wgz
 		state = msm8x16_wcd_codec_get_headset_state();
-#endif
+		usleep_range(4000, 4100);
+#else
 		usleep_range(7000, 7100);
+#endif
 		if (w->shift == 5) {
 			snd_soc_update_bits(codec,
 				MSM8X16_WCD_A_ANALOG_RX_HPH_L_TEST, 0x04, 0x04);
@@ -5661,7 +5663,8 @@ static int msm8x16_wcd_codec_probe(struct snd_soc_codec *codec)
 	accdet_data.state = 0;
 
 	ret = switch_dev_register(&accdet_data);
-	if(ret)	{
+	if(ret)
+	{
 		dev_err(codec->dev, "%s: Failed to register h2w\n", __func__);
 		return -ENOMEM;
 	}
